@@ -1,0 +1,359 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>תחזיות התפשטות קורונה</title>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="/resources/demos/style.css">
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <link href="scripts/c3.css" rel="stylesheet">
+    <link rel="manifest" href="manifest.json" />
+
+    <!-- Load d3.js and c3.js -->
+    <script src="scripts/c3.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.15.1/d3.min.js"></script>
+
+    <script src="scripts/papaparse.min.js"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", function () {
+                navigator.serviceWorker
+                    .register("/predictCoronaSpreading/serviceWorker.js")
+                    .then(res => console.log("service worker registered"))
+                    .catch(err => console.log("service worker not registered", err))
+            });
+        }
+    </script>
+
+    <style>
+        #indicators {
+            width: 20%;
+            display: inline-block;
+        }
+
+        #graphContainer {
+            width: 79%;
+            display: inline-block;
+            height: 3%;
+            float: left;
+        }
+
+        .indicator {
+            background-color: #f2f2f2;
+            margin: 7%;
+        }
+
+        .title {
+            font-family: Tahoma;
+            color: blue;
+            font-size: 1.5vw;
+            text-align: center;
+        }
+
+        .num {
+            color: red;
+            font-size: 5vw;
+            font-family: Tahoma;
+            text-align: center;
+        }
+
+        .bottom {
+            color: blue;
+            font-size: 1vw;
+            font-family: Tahoma;
+            text-align: left;
+            direction: rtl;
+        }
+
+        #titleDate {
+            background-color: darkblue;
+            font-family: Tahoma;
+            font-size: 1.1vw;
+            color: white;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        var Confirmed, Death, Recover;
+
+        $(document).ready(function () {
+
+            $("#tabs").tabs();
+            
+            changeTutleByDate();
+            drawChart('predictConfirmed');
+           // drawChart('predictDeath');
+           // drawChart('predictRecover');
+            $('#clickDeath').click(function () {
+                drawChart('predictDeath');
+            });
+            $('#clickConfirmed').click(function () {
+                drawChart('predictConfirmed');
+            });
+            $('#clickRecover').click(function () {
+                drawChart('predictRecover');
+            });
+            $('#clickMunshamim').click(function () {
+                drawChart('predictMunsham');
+            });
+            $('#clickStat').click(function () {
+                drawPie('graph-pie');
+                drawTimeSeries('graph-ts');
+                drawBar('graph-bar');
+                drawAreaChart('graph-ac');
+            });
+
+        });
+        function drawChart(selector, array) {
+
+            var chart = c3.generate({
+                bindto: '#' + selector,
+                data: {
+                    columns: [
+                        ['data1', 30, 200, 100, 400, 150, 250],
+                        ['data2', 50, 20, 10, 40, 15, 25]
+                    ]
+                },
+            });
+
+            setTimeout(function () {
+                chart.load({
+                    columns: [
+                        ['data1', 230, 190, 300, 500, 300, 400]
+                    ]
+                });
+            }, 1000);
+
+            setTimeout(function () {
+                chart.load({
+                    columns: [
+                        ['data3', 130, 150, 200, 300, 200, 100]
+                    ]
+                });
+            }, 1500);
+
+            setTimeout(function () {
+                chart.unload({
+                    ids: 'data1'
+                });
+            }, 2000);
+            window.setInterval(chart.resize({ height: 0.85 * innerHeight }), 100);
+        }
+        function drawPie(selector, array) {
+
+            var chart = c3.generate({
+                bindto: '#' + selector,
+                data: {
+                    columns: [
+                        ['data1', 30],
+                        ['data2', 120],
+                    ],
+                    type: 'donut',
+                    onclick: function (d, i) { console.log("onclick", d, i); },
+                    onmouseover: function (d, i) { console.log("onmouseover", d, i); },
+                    onmouseout: function (d, i) { console.log("onmouseout", d, i); }
+                },
+                donut: {
+                    title: "Iris Petal Width"
+                }
+            });
+            chart.resize({width: 0.35 * innerWidth, height: 0.4 * innerHeight})
+            setTimeout(function () {
+                chart.load({
+                    columns: [
+                        ["setosa", 0.2, 0.2, 0.2, 0.2, 0.2, 0.4, 0.3, 0.2, 0.2, 0.1, 0.2, 0.2, 0.1, 0.1, 0.2, 0.4, 0.4, 0.3, 0.3, 0.3, 0.2, 0.4, 0.2, 0.5, 0.2, 0.2, 0.4, 0.2, 0.2, 0.2, 0.2, 0.4, 0.1, 0.2, 0.2, 0.2, 0.2, 0.1, 0.2, 0.2, 0.3, 0.3, 0.2, 0.6, 0.4, 0.3, 0.2, 0.2, 0.2, 0.2],
+                        ["versicolor", 1.4, 1.5, 1.5, 1.3, 1.5, 1.3, 1.6, 1.0, 1.3, 1.4, 1.0, 1.5, 1.0, 1.4, 1.3, 1.4, 1.5, 1.0, 1.5, 1.1, 1.8, 1.3, 1.5, 1.2, 1.3, 1.4, 1.4, 1.7, 1.5, 1.0, 1.1, 1.0, 1.2, 1.6, 1.5, 1.6, 1.5, 1.3, 1.3, 1.3, 1.2, 1.4, 1.2, 1.0, 1.3, 1.2, 1.3, 1.3, 1.1, 1.3],
+                        ["virginica", 2.5, 1.9, 2.1, 1.8, 2.2, 2.1, 1.7, 1.8, 1.8, 2.5, 2.0, 1.9, 2.1, 2.0, 2.4, 2.3, 1.8, 2.2, 2.3, 1.5, 2.3, 2.0, 2.0, 1.8, 2.1, 1.8, 1.8, 1.8, 2.1, 1.6, 1.9, 2.0, 2.2, 1.5, 1.4, 2.3, 2.4, 1.8, 1.8, 2.1, 2.4, 2.3, 1.9, 2.3, 2.5, 2.3, 1.9, 2.0, 2.3, 1.8],
+                    ]
+                });
+            }, 1500);
+
+            setTimeout(function () {
+                chart.unload({
+                    ids: 'data1'
+                });
+                chart.unload({
+                    ids: 'data2'
+                });
+            }, 2500);
+
+
+        }
+        function drawBar(selector, array) {
+            var chart = c3.generate({
+                bindto: '#' + selector,
+                data: {
+                    columns: [
+                        ['data1', 30, 20, 50, 40, 60, 50],
+                        ['data2', 200, 130, 90, 240, 130, 220],
+                        ['data3', 300, 200, 160, 400, 250, 250],
+                        ['data4', 200, 130, 90, 240, 130, 220],
+                        ['data5', 130, 120, 150, 140, 160, 150],
+                        ['data6', 90, 70, 20, 50, 60, 120],
+                    ],
+                    type: 'bar',
+                    types: {
+                        data3: 'spline',
+                        data4: 'line',
+                        data6: 'area',
+                    },
+                    groups: [
+                        ['data1', 'data2']
+                    ]
+                }
+            });
+            chart.resize({ width: 0.35 * innerWidth, height: 0.4 * innerHeight })
+        }
+        function drawTimeSeries(selector,array) {
+
+            var chart = c3.generate({
+                bindto: '#' + selector,
+                data: {
+                    x: 'x',
+                    //        xFormat: '%Y%m%d', // 'xFormat' can be used as custom format of 'x'
+                    columns: [
+                        ['x', '2013-01-01', '2013-01-02', '2013-01-03', '2013-01-04', '2013-01-05', '2013-01-06'],
+                        //            ['x', '20130101', '20130102', '20130103', '20130104', '20130105', '20130106'],
+                        ['data1', 30, 200, 100, 400, 150, 250],
+                        ['data2', 130, 340, 200, 500, 250, 350]
+                    ]
+                },
+                axis: {
+                    x: {
+                        type: 'timeseries',
+                        tick: {
+                            format: '%Y-%m-%d'
+                        }
+                    }
+                }
+            });
+            chart.resize({ width: 0.35 * innerWidth, height: 0.4 * innerHeight });
+            setTimeout(function () {
+                chart.load({
+                    columns: [
+                        ['data3', 400, 500, 450, 700, 600, 500]
+                    ]
+                });
+            }, 1000);
+
+
+        }
+        function drawAreaChart(selector, array) {
+            var chart = c3.generate({
+                bindto: '#'+selector,
+                data: {
+                    columns: [
+                        ['data1', 300, 350, 300, 0, 0, 0],
+                        ['data2', 130, 100, 140, 200, 150, 50]
+                    ],
+                    types: {
+                        data1: 'area',
+                        data2: 'area-spline'
+                    }
+                }
+            });
+            chart.resize({ width: 0.35 * innerWidth, height: 0.4 * innerHeight });
+        }
+        function getData(url) {
+
+        }
+
+        function appendData(data) {
+
+        }
+
+        function changeTutleByDate() {
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDay();
+            var text = ' תחזית קורונה לתאריך ה - 20/04/2020';  
+            $('#titleDate').text( text);
+        }
+    </script>
+    <div id="graphContainer">
+        <div id="tabs" >
+            <ul>
+                <li id="clickConfirmed"><a href="#tabs-1">תחזית- כמות תחלואה</a></li>
+                <li id="clickDeath"><a href="#tabs-2">תחזית - כמות נפטרים</a></li>
+                <li id="clickRecover"><a href="#tabs-3">תחזית-כמות מחלימים</a></li>
+                <li id="clickMunshamim"><a href="#tabs-4">תחזית - כמות מונשמין</a></li>
+                <li id="clickStat"><a href="#tabs-5">סטטיטיקות רגילות</a></li>
+            </ul>
+            <div id="tabs-1" >
+                <div id="predictConfirmed"></div>
+            </div>
+            <div id="tabs-2">
+                <div id="predictDeath"></div>
+            </div>
+            <div id="tabs-3">
+                <div id="predictRecover"></div>
+            </div>
+            <div id="tabs-4">
+                <div id="predictMunsham"></div>
+            </div>
+            <div id="tabs-5">
+                <table style="width:80%">
+                    <tr><td style="width:40%;height:40vh" id="graph-pie"></td><td style="width:40%" id="graph-bar"></td></tr>
+                    <tr><td style="width:40%;height:40vh"id="graph-ts"></td><td style="width:40%"id="graph-ac"></td></tr>
+                </table>
+            </div>
+
+        </div>
+    </div>
+    <div id="indicators"  >
+        <div id="titleDate">
+            
+        </div>
+        <div id="indicPredictConfirmed" class="indicator">
+            <div class="title">
+                נדבקים בישראל
+            </div>
+            <div class="num">
+                13,546
+            </div>
+            <div class="bottom">
+                +130 מאתמול
+            </div>
+        </div>
+        <div id="indicPredictDeath" class="indicator">
+            <div class="title">
+                מתים בישראל
+            </div>
+            <div class="num">
+                180
+            </div>
+            <div class="bottom">
+                +20 מאתמול
+            </div>
+        </div>
+    <div id="indicPredictRecover" class="indicator">
+        <div class="title">
+            מחלימים בישראל
+        </div>
+        <div class="num">
+            3000
+        </div>
+        <div class="bottom">
+            +600 מאתמול
+        </div>
+    </div>
+    <div id="indicPredictKashe" class="indicator">
+        <div class="title">
+            מונשמים בישראל
+        </div>
+        <div class="num">
+            117
+        </div>
+        <div class="bottom">
+            -13 מאתמול
+        </div>
+    </div>
+        </div>
+    
+
+</body>
+</html>
